@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-mono: 'Roboto Mono', monospace;
+    --font-sans: 'Inter', sans-serif;
+
+    /* Obsidian background */
+    --background: 240 10% 5%;
+    --foreground: 240 20% 95%;
+
+    /* Panel Gray surfaces */
+    --card: 228 10% 11%;
+    --card-foreground: 240 20% 95%;
+
+    --popover: 228 10% 11%;
+    --popover-foreground: 240 20% 95%;
+
+    /* Luminous Cyan */
+    --primary: 180 100% 50%;
+    --primary-foreground: 240 10% 5%;
+
+    /* Surface variant */
+    --secondary: 228 10% 15%;
+    --secondary-foreground: 240 20% 95%;
+
+    --muted: 228 8% 18%;
+    --muted-foreground: 228 10% 55%;
+
+    --accent: 180 100% 50%;
+    --accent-foreground: 240 10% 5%;
+
+    /* Warning Amber */
+    --destructive: 43 100% 50%;
+    --destructive-foreground: 240 10% 5%;
+
+    --border: 228 10% 18%;
+    --input: 228 10% 18%;
+    --ring: 180 100% 50%;
+
+    --radius: 0px;
+
+    /* Sidebar */
+    --sidebar-background: 228 10% 8%;
+    --sidebar-foreground: 240 20% 95%;
+    --sidebar-primary: 180 100% 50%;
+    --sidebar-primary-foreground: 240 10% 5%;
+    --sidebar-accent: 228 10% 15%;
+    --sidebar-accent-foreground: 240 20% 95%;
+    --sidebar-border: 228 10% 18%;
+    --sidebar-ring: 180 100% 50%;
+
+    /* Custom tokens */
+    --warning: 43 100% 50%;
+    --warning-foreground: 240 10% 5%;
+    --success: 152 70% 45%;
+    --success-foreground: 240 10% 5%;
+    --cyan-glow: 180 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-mono);
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .glow-cyan {
+    box-shadow: 0 0 20px hsl(180 100% 50% / 0.15), 0 0 60px hsl(180 100% 50% / 0.05);
+  }
+
+  .glow-text-cyan {
+    text-shadow: 0 0 20px hsl(180 100% 50% / 0.5);
+  }
+
+  .border-glow {
+    border-color: hsl(180 100% 50% / 0.3);
+  }
+
+  .surface {
+    @apply bg-card;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2 text-muted-foreground transition-all duration-200 hover:text-foreground hover:bg-secondary font-mono text-sm tracking-wide;
+  }
+
+  .nav-item-active {
+    @apply text-primary bg-secondary border-l-2 border-primary;
+  }
+
+  .stat-value {
+    @apply font-mono text-3xl font-light tracking-tight text-foreground;
+  }
+
+  .stat-label {
+    @apply font-mono text-xs uppercase tracking-widest text-muted-foreground;
+  }
+
+  .page-title {
+    @apply font-mono text-2xl font-light tracking-tight text-foreground;
+  }
+
+  .section-title {
+    @apply font-mono text-xs uppercase tracking-widest text-muted-foreground mb-4 leading-4;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: #111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print,
+  nav,
+  aside,
+  header,
+  [data-sidebar],
+  [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
+
+  main, [role="main"] {
+    margin: 0 !important;
+    padding: 20px !important;
+    max-width: 100% !important;
+  }
+
+  .surface {
+    border-color: #ddd !important;
+    background: white !important;
+  }
+
+  * {
+    color: #111 !important;
+    border-color: #ddd !important;
+  }
+}
