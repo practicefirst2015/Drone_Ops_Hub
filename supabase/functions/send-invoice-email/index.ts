@@ -13,6 +13,45 @@ async function hmacHex(secret: string, msg: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Decide which domain emailed document links should point at.
+ *
+ * Preference order: the origin the sender is actually using (so custom domains
+ * and previews work with no redeploy), then an APP_BASE_URL secret if set,
+ * then a safe default.
+ *
+ * The caller-supplied origin is allow-listed — an emailed link is seen by
+ * clients, so we never emit an arbitrary attacker-controlled domain.
+ */
+function resolveAppBase(candidate: unknown): string {
+  const configured = Deno.env.get("APP_BASE_URL");
+  const fallback = configured || "https://drone-ops-hub-theta.vercel.app";
+  if (typeof candidate !== "string" || !candidate) return fallback;
+
+  let u: URL;
+  try {
+    u = new URL(candidate);
+  } catch {
+    return fallback;
+  }
+  if (u.protocol !== "https:" && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
+    return fallback;
+  }
+  const host = u.hostname.toLowerCase();
+  const allowed =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host.endsWith(".vercel.app") ||
+    (configured ? host === new URL(configured).hostname.toLowerCase() : false) ||
+    (Deno.env.get("APP_ALLOWED_HOSTS") ?? "")
+      .split(",")
+      .map((h) => h.trim().toLowerCase())
+      .filter(Boolean)
+      .some((h) => host === h || host.endsWith(`.${h}`));
+
+  return allowed ? u.origin : fallback;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("CORS_ALLOW_ORIGIN") ?? "*",
   "Access-Control-Allow-Headers":
@@ -134,9 +173,10 @@ Deno.serve(async (req) => {
       if (filePath) {
         const exp = String(Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30);
         const sig = await hmacHex(supabaseServiceKey, `${filePath}:${exp}`);
-        // Point at the app's own domain: Supabase serves HTML as text/plain,
-        // so the app renders the document in an iframe instead.
-        const appBase = Deno.env.get("APP_BASE_URL") ?? "https://drone-ops-hub-theta.vercel.app";
+        // Point at the app's own domain (Supabase serves HTML as text/plain, so
+        // the app renders the document itself). Use whichever domain the sender
+        // is actually on — custom domain, vercel preview, or local dev.
+        const appBase = resolveAppBase(body.app_origin);
         pdfUrl = `${appBase}/doc?path=${encodeURIComponent(filePath)}&exp=${exp}&sig=${sig}`;
       } else {
         pdfUrl = pdfResp.data?.url || null;

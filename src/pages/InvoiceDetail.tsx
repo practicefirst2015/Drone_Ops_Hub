@@ -194,7 +194,9 @@ const InvoiceDetail = () => {
         if (clientEmail) {
           try {
             const { data, error } = await supabase.functions.invoke("send-invoice-email", {
-              body: { invoice_id: id },
+              // Send the current origin so the emailed document link points at
+              // whatever domain this app is being used on (custom domain, preview, etc.)
+              body: { invoice_id: id, app_origin: window.location.origin },
             });
             if (error) throw error;
             toast.success(`Invoice emailed to ${data?.sentTo}`);
