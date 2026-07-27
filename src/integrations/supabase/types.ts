@@ -443,6 +443,8 @@ export type Database = {
           max_range_km: number | null
           max_speed_ms: number | null
           max_wind_resistance_ms: number | null
+          model_3d_attribution: string | null
+          model_3d_url: string | null
           motor_type: string | null
           name: string
           noise_level_db: number | null
@@ -478,6 +480,8 @@ export type Database = {
           max_range_km?: number | null
           max_speed_ms?: number | null
           max_wind_resistance_ms?: number | null
+          model_3d_attribution?: string | null
+          model_3d_url?: string | null
           motor_type?: string | null
           name: string
           noise_level_db?: number | null
@@ -513,6 +517,8 @@ export type Database = {
           max_range_km?: number | null
           max_speed_ms?: number | null
           max_wind_resistance_ms?: number | null
+          model_3d_attribution?: string | null
+          model_3d_url?: string | null
           motor_type?: string | null
           name?: string
           noise_level_db?: number | null

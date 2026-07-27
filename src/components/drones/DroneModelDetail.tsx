@@ -314,19 +314,30 @@ const DroneModelDetailInner = forwardRef<HTMLDivElement, Props>(function DroneMo
         </div>
       )}
 
-      {/* 3D Viewer - only when a .glb/.gltf URL exists */}
-      {model.image_url && /\.gl(b|tf)$/i.test(model.image_url) && (
-        <div className="mb-8">
-          <p className="section-title mb-3">3D Preview</p>
-          <Suspense fallback={
-            <div className="surface border border-border h-64 flex items-center justify-center text-muted-foreground font-mono text-xs">
-              Loading viewer…
-            </div>
-          }>
-            <DroneModelViewer modelUrl={model.image_url} modelName={model.name} />
-          </Suspense>
-        </div>
-      )}
+      {/* 3D Viewer - dedicated model_3d_url field, with legacy .glb-in-image_url fallback */}
+      {(() => {
+        const glbUrl =
+          (model as any).model_3d_url ||
+          (model.image_url && /\.gl(b|tf)$/i.test(model.image_url) ? model.image_url : null);
+        if (!glbUrl) return null;
+        return (
+          <div className="mb-8">
+            <p className="section-title mb-3">3D Preview</p>
+            <Suspense fallback={
+              <div className="surface border border-border h-64 flex items-center justify-center text-muted-foreground font-mono text-xs">
+                Loading viewer…
+              </div>
+            }>
+              <DroneModelViewer modelUrl={glbUrl} modelName={model.name} />
+            </Suspense>
+            {(model as any).model_3d_attribution && (
+              <p className="font-mono text-[10px] text-muted-foreground mt-2">
+                {(model as any).model_3d_attribution}
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Flight Utilization */}
       {droneStats && (
