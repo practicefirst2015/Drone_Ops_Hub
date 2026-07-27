@@ -266,11 +266,23 @@ const InvoiceDetail = () => {
     const { data } = await supabase.storage
       .from(STORAGE_BUCKET)
       .createSignedUrl(storagePath, SIGNED_URL_LONG);
-    if (data?.signedUrl) {
-      window.open(data.signedUrl, "_blank");
-    } else {
+    if (!data?.signedUrl) {
       toast.error("Could not generate download link");
+      return;
     }
+    // Storage serves HTML as plain text; fetch and render via a blob URL instead.
+    if (storagePath.endsWith(".html")) {
+      try {
+        const response = await fetch(data.signedUrl);
+        const html = await response.text();
+        const blob = new Blob([html], { type: "text/html" });
+        window.open(URL.createObjectURL(blob), "_blank");
+        return;
+      } catch {
+        // Fall through to direct open
+      }
+    }
+    window.open(data.signedUrl, "_blank");
   };
 
   const handleDownloadFile = async (storagePath: string, fileName: string) => {

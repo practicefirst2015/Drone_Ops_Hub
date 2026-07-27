@@ -4,6 +4,15 @@ const esc = (v: unknown): string =>
   String(v ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
+const te = new TextEncoder();
+async function hmacHex(secret: string, msg: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw", te.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, te.encode(msg));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("CORS_ALLOW_ORIGIN") ?? "*",
   "Access-Control-Allow-Headers":
@@ -110,14 +119,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate PDF URL by calling generate-invoice-pdf internally
+    // Generate the invoice document by calling generate-invoice-pdf internally
+    // (forwarding the caller's JWT so the platform verify_jwt check passes),
+    // then build a signed view-document link that renders as a proper page.
+    // Storage's own URLs serve HTML as plain text, so we route through the
+    // view-document function instead. Link is valid for 30 days.
     let pdfUrl: string | null = null;
     try {
       const pdfResp = await supabase.functions.invoke("generate-invoice-pdf", {
         body: { invoice_id },
         headers: { Authorization: authHeader },
       });
-      pdfUrl = pdfResp.data?.url || null;
+      const filePath: string | null = pdfResp.data?.file_path || null;
+      if (filePath) {
+        const exp = String(Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30);
+        const sig = await hmacHex(supabaseServiceKey, `${filePath}:${exp}`);
+        pdfUrl = `${supabaseUrl}/functions/v1/view-document?path=${encodeURIComponent(filePath)}&exp=${exp}&sig=${sig}`;
+      } else {
+        pdfUrl = pdfResp.data?.url || null;
+      }
     } catch {
       // Non-fatal — email will still send without PDF link
     }
