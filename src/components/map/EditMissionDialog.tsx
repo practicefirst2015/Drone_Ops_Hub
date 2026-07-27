@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { MissionMapItem } from "./mapTypes";
 import { MISSION_STATUS_OPTIONS } from "./mapConstants";
+import { AddressSearch } from "./AddressSearch";
 
 type Props = {
   mission: MissionMapItem | null;
@@ -191,6 +192,12 @@ export const EditMissionDialog = ({ mission, open, onOpenChange }: Props) => {
             <textarea value={form.objective} onChange={(e) => update("objective", e.target.value)} className={`w-full ${tac} p-2 border rounded-md`} placeholder="Mission objective..." />
           </div>
 
+          <AddressSearch
+            onSelect={(r) => {
+              update("latitude", r.lat.toFixed(6));
+              update("longitude", r.lon.toFixed(6));
+            }}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="stat-label block mb-1.5">Latitude</label>

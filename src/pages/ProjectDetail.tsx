@@ -43,6 +43,7 @@ import { useProjectIntelligence } from "@/hooks/useMissionIntelligence";
 import { IngestionBrowser } from "@/components/ingestion/IngestionBrowser";
 import { InspectionBanner } from "@/components/inspection/InspectionIntelligencePanel";
 import { useProjectInspectionIntelligence } from "@/hooks/useInspectionIntelligence";
+import { AddressSearch, shortPlaceName } from "@/components/map/AddressSearch";
 
 const ALL_TABS = [
   { key: "overview", label: "Overview", viewerVisible: true },
@@ -1080,6 +1081,13 @@ function SettingsTab({ project, isAdmin }: { project: any; isAdmin: boolean }) {
           <label className="stat-label block mb-2">Location Name</label>
           <input type="text" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="e.g. Riverside Solar Farm" className={inputClass} />
         </div>
+        <AddressSearch
+          onSelect={(r) => {
+            setLatitude(r.lat.toFixed(6));
+            setLongitude(r.lon.toFixed(6));
+            if (!locationName.trim()) setLocationName(shortPlaceName(r.displayName));
+          }}
+        />
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="stat-label block mb-2">Latitude</label>

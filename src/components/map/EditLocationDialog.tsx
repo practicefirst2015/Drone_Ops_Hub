@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProjectWithLocation } from "./mapTypes";
+import { AddressSearch, shortPlaceName } from "./AddressSearch";
 
 type Props = {
   project: ProjectWithLocation | null;
@@ -77,6 +78,13 @@ export const EditLocationDialog = ({ project, open, onOpenChange, orgId }: Props
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-2">
+          <AddressSearch
+            onSelect={(r) => {
+              setLat(r.lat.toFixed(6));
+              setLng(r.lon.toFixed(6));
+              if (!locationName.trim()) setLocationName(shortPlaceName(r.displayName));
+            }}
+          />
           <div>
             <label className="stat-label block mb-1.5">Location Name</label>
             <Input value={locationName} onChange={e => setLocationName(e.target.value)} placeholder="e.g. Downtown Site A" className={inputClass} />
