@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   Radio,
   BarChart3,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -30,6 +31,7 @@ const mainNav = [
   { title: "Airspace", url: "/map", icon: Map, viewerVisible: false },
   { title: "Analytics", url: "/analytics", icon: BarChart3, viewerVisible: false },
   { title: "Field Mode", url: "/field", icon: Radio, viewerVisible: true },
+  { title: "Guide", url: "/guide", icon: BookOpen, viewerVisible: true },
 ];
 
 const adminNav = [

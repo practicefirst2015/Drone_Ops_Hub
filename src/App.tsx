@@ -36,6 +36,7 @@ const FlightLogDetail = lazy(() => import("./pages/FlightLogDetail"));
 const ClientProjectReport = lazy(() => import("./pages/ClientProjectReport"));
 const FieldMode = lazy(() => import("./pages/FieldMode"));
 const Analytics = lazy(() => import("./pages/Analytics"));
+const Guide = lazy(() => import("./pages/Guide"));
 
 // Portal pages (client-facing)
 const PortalDashboard = lazy(() => import("./pages/portal/PortalDashboard"));
@@ -142,6 +143,7 @@ function ProtectedRoutes() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/guide" element={<Guide />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
