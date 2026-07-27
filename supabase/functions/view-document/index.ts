@@ -27,37 +27,46 @@ function safeEqual(a: string, b: string): boolean {
   return out === 0;
 }
 
+// The app fetches this from its own domain, so allow cross-origin reads.
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+};
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
     const url = new URL(req.url);
     const path = url.searchParams.get("path") ?? "";
     const exp = url.searchParams.get("exp") ?? "";
     const sig = url.searchParams.get("sig") ?? "";
 
-    if (!path || !exp || !sig) return new Response("Missing parameters", { status: 400 });
+    if (!path || !exp || !sig) return new Response("Missing parameters", { status: 400, headers: cors });
     // Only .html documents in known folders; no traversal.
     if (path.includes("..") || !/^[\w\-./ %()]+\.html$/.test(path)) {
-      return new Response("Invalid path", { status: 400 });
+      return new Response("Invalid path", { status: 400, headers: cors });
     }
     if (!/^(invoices|mission-briefs|postflight-reports)\//.test(path)) {
-      return new Response("Invalid path", { status: 400 });
+      return new Response("Invalid path", { status: 400, headers: cors });
     }
     const expNum = Number(exp);
     if (!Number.isFinite(expNum) || Date.now() / 1000 > expNum) {
-      return new Response("This link has expired. Please request a new copy.", { status: 410 });
+      return new Response("This link has expired. Please request a new copy.", { status: 410, headers: cors });
     }
 
     const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const expected = await hmacHex(secret, `${path}:${exp}`);
-    if (!safeEqual(sig, expected)) return new Response("Invalid signature", { status: 403 });
+    if (!safeEqual(sig, expected)) return new Response("Invalid signature", { status: 403, headers: cors });
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, secret);
     const { data, error } = await supabase.storage.from("project-documents").download(path);
-    if (error || !data) return new Response("Document not found", { status: 404 });
+    if (error || !data) return new Response("Document not found", { status: 404, headers: cors });
 
     const html = await data.text();
     return new Response(html, {
       headers: {
+        ...cors,
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "private, max-age=300",
         "X-Content-Type-Options": "nosniff",
@@ -65,6 +74,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("view-document error:", err);
-    return new Response("Internal error", { status: 500 });
+    return new Response("Internal error", { status: 500, headers: cors });
   }
 });

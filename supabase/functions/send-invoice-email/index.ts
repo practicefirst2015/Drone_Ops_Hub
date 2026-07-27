@@ -134,7 +134,10 @@ Deno.serve(async (req) => {
       if (filePath) {
         const exp = String(Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30);
         const sig = await hmacHex(supabaseServiceKey, `${filePath}:${exp}`);
-        pdfUrl = `${supabaseUrl}/functions/v1/view-document?path=${encodeURIComponent(filePath)}&exp=${exp}&sig=${sig}`;
+        // Point at the app's own domain: Supabase serves HTML as text/plain,
+        // so the app renders the document in an iframe instead.
+        const appBase = Deno.env.get("APP_BASE_URL") ?? "https://drone-ops-hub-theta.vercel.app";
+        pdfUrl = `${appBase}/doc?path=${encodeURIComponent(filePath)}&exp=${exp}&sig=${sig}`;
       } else {
         pdfUrl = pdfResp.data?.url || null;
       }
