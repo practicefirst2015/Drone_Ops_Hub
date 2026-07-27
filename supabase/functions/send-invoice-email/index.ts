@@ -115,6 +115,7 @@ Deno.serve(async (req) => {
     try {
       const pdfResp = await supabase.functions.invoke("generate-invoice-pdf", {
         body: { invoice_id },
+        headers: { Authorization: authHeader },
       });
       pdfUrl = pdfResp.data?.url || null;
     } catch {
