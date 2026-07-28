@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, X, Clock, AlertTriangle } from "lucide-react";
+import { Plus, X, Clock, AlertTriangle, Mic } from "lucide-react";
+import { VoiceFlightLogPanel } from "@/components/flightlogs/VoiceFlightLogPanel";
 import { Input } from "@/components/ui/input";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +60,77 @@ export function FlightLogFormDialog({ open, onOpenChange, editData, prefillMissi
   const [projectId, setProjectId] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [missionPrefilled, setMissionPrefilled] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceFilled, setVoiceFilled] = useState<string[]>([]);
+  const [voiceNote, setVoiceNote] = useState<string | null>(null);
+
+  /**
+   * Merge AI-proposed values from a spoken debrief into the form.
+   * Only fills fields the pilot actually mentioned; never overwrites something
+   * they already typed. Nothing saves until they press Save.
+   */
+  const applyVoiceFields = (f: Record<string, any>) => {
+    const filled: string[] = [];
+    setForm((prev) => {
+      const next = { ...prev };
+      const put = (key: keyof typeof EMPTY_FORM, value: any) => {
+        if (value === null || value === undefined || value === "") return;
+        const current = (next as any)[key];
+        if (current !== "" && current !== false && current !== undefined && current !== null) return;
+        (next as any)[key] = value;
+        filled.push(key as string);
+      };
+
+      put("title", f.title);
+      put("flight_date", f.flight_date);
+      put("project_id", f.project_id);
+      put("mission_id", f.mission_id);
+      put("drone_model_id", f.drone_model_id);
+      put("pilot_id", f.pilot_id);
+      if (f.outcome) { next.outcome = f.outcome; filled.push("outcome"); }
+      put("duration_minutes", f.duration_minutes != null ? String(f.duration_minutes) : "");
+      put("launch_location", f.launch_location);
+      put("objective", f.objective);
+      put("weather_summary", f.weather_summary);
+      put("airspace_notes", f.airspace_notes);
+      put("incidents", f.incidents);
+      put("deliverables_summary", f.deliverables_summary);
+      put("battery_equipment_notes", f.battery_equipment_notes);
+      put("flight_area_summary", f.flight_area_summary);
+      put("postflight_notes", f.postflight_notes);
+      if (f.preflight_completed === true && !next.preflight_completed) {
+        next.preflight_completed = true;
+        filled.push("preflight_completed");
+      }
+
+      // Times arrive as HH:MM; the inputs want a full datetime-local value.
+      const day = (f.flight_date || next.flight_date || EMPTY_FORM.flight_date) as string;
+      const toLocal = (t: unknown) =>
+        typeof t === "string" && /^\d{1,2}:\d{2}$/.test(t)
+          ? `${day}T${t.padStart(5, "0")}`
+          : "";
+      const lt = toLocal(f.launch_time);
+      if (lt && !next.launch_time) { next.launch_time = lt; filled.push("launch_time"); }
+      const ldt = toLocal(f.landing_time);
+      if (ldt && !next.landing_time) { next.landing_time = ldt; filled.push("landing_time"); }
+
+      if (next.project_id) setProjectId(next.project_id);
+      return next;
+    });
+
+    // Surface anything spoken that couldn't be matched to a record.
+    const unmatched: string[] = [];
+    if (!f.project_id && f.project_spoken) unmatched.push(`project "${f.project_spoken}"`);
+    if (!f.mission_id && f.mission_spoken) unmatched.push(`mission "${f.mission_spoken}"`);
+    if (!f.drone_model_id && f.drone_spoken) unmatched.push(`drone "${f.drone_spoken}"`);
+    if (!f.pilot_id && f.pilot_spoken) unmatched.push(`pilot "${f.pilot_spoken}"`);
+    const parts = [
+      unmatched.length ? `Couldn't match ${unmatched.join(", ")} — pick manually.` : "",
+      typeof f.confidence_notes === "string" && f.confidence_notes ? f.confidence_notes : "",
+    ].filter(Boolean);
+    setVoiceNote(parts.length ? parts.join(" ") : null);
+    setVoiceFilled(filled);
+  };
 
   // Queries
   const { data: projects = [] } = useQuery({
@@ -119,7 +191,12 @@ export function FlightLogFormDialog({ open, onOpenChange, editData, prefillMissi
 
   // Initialize form with edit data
   useEffect(() => {
-    if (open) setErrors({});
+    if (open) {
+      setErrors({});
+      setVoiceOpen(false);
+      setVoiceFilled([]);
+      setVoiceNote(null);
+    }
     if (open && editData) {
       setForm({
         title: editData.title || "",
@@ -308,12 +385,39 @@ export function FlightLogFormDialog({ open, onOpenChange, editData, prefillMissi
           <h2 className="font-mono text-sm font-medium text-foreground">
             {isEdit ? "Edit Flight Log" : "New Flight Log"}
           </h2>
-          <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground">
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {!voiceOpen && (
+              <button
+                type="button"
+                onClick={() => setVoiceOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 border border-border font-mono text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+                title="Fill this form by speaking"
+              >
+                <Mic className="w-3.5 h-3.5" />
+                Dictate
+              </button>
+            )}
+            <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          {voiceOpen && (
+            <VoiceFlightLogPanel
+              onFields={applyVoiceFields}
+              onClose={() => setVoiceOpen(false)}
+            />
+          )}
+          {voiceFilled.length > 0 && (
+            <div className="border-l-2 border-primary bg-primary/5 px-3 py-2">
+              <p className="font-mono text-[11px] text-foreground">
+                Filled {voiceFilled.length} field{voiceFilled.length === 1 ? "" : "s"} from your recording — please review.
+              </p>
+              {voiceNote && <p className="text-[11px] text-muted-foreground mt-1">{voiceNote}</p>}
+            </div>
+          )}
           {/* Title */}
           <div>
             <label className="stat-label block mb-1">Flight Title *</label>
