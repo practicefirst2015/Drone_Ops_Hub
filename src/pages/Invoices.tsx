@@ -256,7 +256,8 @@ const Invoices = () => {
             hints={!search && !statusFilter ? [{ label: "Add a client first", href: "/clients" }] : undefined}
           />
         ) : (
-          <table className="w-full">
+          <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-border">
                 <th className="px-6 py-3 text-left stat-label">Invoice</th>
@@ -300,6 +301,7 @@ const Invoices = () => {
               })}
             </tbody>
           </table>
+              </div>
         )}
       </div>
       <ConfirmationDialog />

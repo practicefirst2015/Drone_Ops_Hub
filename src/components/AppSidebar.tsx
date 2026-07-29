@@ -15,6 +15,7 @@ import {
   Radio,
   BarChart3,
   BookOpen,
+  X,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useOrgRole } from "@/hooks/useOrgRole";
@@ -40,77 +41,112 @@ const adminNav = [
 ];
 
 interface AppSidebarProps {
+  /** Desktop-only icon-rail mode. Ignored on mobile, where the drawer is full width. */
   collapsed: boolean;
   onToggle: () => void;
+  /** Mobile drawer visibility. */
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
-export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
+export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: AppSidebarProps) {
   const { isAdmin, isViewer } = useOrgRole();
   const visibleNav = isViewer ? mainNav.filter((item) => item.viewerVisible) : mainNav;
 
+  // On mobile the sidebar is an overlay drawer; labels always show there, so
+  // `collapsed` (the desktop icon rail) must not hide them.
+  const hideLabels = collapsed;
+
   return (
-    <aside
-      className={`fixed top-0 left-0 h-screen bg-sidebar border-r border-border flex flex-col z-50 transition-all duration-300 ${
-        collapsed ? "w-[72px]" : "w-[240px]"
-      }`}
-    >
-      {/* Logo */}
-      <div className="h-16 flex items-center px-5 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 border border-primary flex items-center justify-center">
-            <Plane className="w-4 h-4 text-primary" />
-          </div>
-          {!collapsed && (
-            <span className="font-mono text-sm font-semibold tracking-widest uppercase text-foreground">
+    <>
+      {/* Mobile scrim */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-background/80 z-40 md:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        aria-label="Main navigation"
+        className={`fixed top-0 left-0 h-screen bg-sidebar border-r border-border flex flex-col z-50
+          transition-transform duration-300 w-[280px] max-w-[85vw]
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0 md:transition-all
+          ${collapsed ? "md:w-[72px]" : "md:w-[240px]"}`}
+      >
+        {/* Logo */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 border border-primary flex items-center justify-center shrink-0">
+              <Plane className="w-4 h-4 text-primary" />
+            </div>
+            <span
+              className={`font-mono text-sm font-semibold tracking-widest uppercase text-foreground ${
+                hideLabels ? "md:hidden" : ""
+              }`}
+            >
               AIRFRAME
             </span>
-          )}
-        </div>
-      </div>
-
-      {/* Main nav */}
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <div className="px-3 mb-2">
-          {!collapsed && <p className="section-title mb-2 px-3">Operations</p>}
-        </div>
-        {visibleNav.map((item) => (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            end={item.url === "/"}
-            className="nav-item mx-2 mb-0.5"
-            activeClassName="nav-item-active"
+          </div>
+          {/* Close (mobile only) */}
+          <button
+            onClick={onMobileClose}
+            className="md:hidden h-11 w-11 -mr-2 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            aria-label="Close navigation"
           >
-            <item.icon className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>{item.title}</span>}
-          </NavLink>
-        ))}
-
-        <div className="my-4 mx-5 border-t border-border" />
-
-        <div className="px-3 mb-2">
-          {!collapsed && <p className="section-title mb-2 px-3">System</p>}
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        {isAdmin && adminNav.map((item) => (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            className="nav-item mx-2 mb-0.5"
-            activeClassName="nav-item-active"
-          >
-            <item.icon className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>{item.title}</span>}
-          </NavLink>
-        ))}
-      </nav>
 
-      {/* Collapse toggle */}
-      <button
-        onClick={onToggle}
-        className="h-12 flex items-center justify-center border-t border-border text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-      </button>
-    </aside>
+        {/* Main nav */}
+        <nav className="flex-1 py-4 overflow-y-auto">
+          <div className="px-3 mb-2">
+            <p className={`section-title mb-2 px-3 ${hideLabels ? "md:hidden" : ""}`}>Operations</p>
+          </div>
+          {visibleNav.map((item) => (
+            <NavLink
+              key={item.url}
+              to={item.url}
+              end={item.url === "/"}
+              onClick={onMobileClose}
+              className="nav-item mx-2 mb-0.5 min-h-[44px] md:min-h-0"
+              activeClassName="nav-item-active"
+            >
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span className={hideLabels ? "md:hidden" : ""}>{item.title}</span>
+            </NavLink>
+          ))}
+
+          <div className="my-4 mx-5 border-t border-border" />
+
+          <div className="px-3 mb-2">
+            <p className={`section-title mb-2 px-3 ${hideLabels ? "md:hidden" : ""}`}>System</p>
+          </div>
+          {isAdmin && adminNav.map((item) => (
+            <NavLink
+              key={item.url}
+              to={item.url}
+              onClick={onMobileClose}
+              className="nav-item mx-2 mb-0.5 min-h-[44px] md:min-h-0"
+              activeClassName="nav-item-active"
+            >
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span className={hideLabels ? "md:hidden" : ""}>{item.title}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Collapse toggle — desktop only; mobile uses the drawer close button */}
+        <button
+          onClick={onToggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden md:flex h-12 items-center justify-center border-t border-border text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+      </aside>
+    </>
   );
 }

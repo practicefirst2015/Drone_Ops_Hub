@@ -413,7 +413,8 @@ const Drones = () => {
             </div>
           ) : (
             <div className="surface border border-border">
-              <table className="w-full">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
                 <thead>
                   <tr className="border-b border-border">
                     <th className="w-8 px-3 py-3"></th>
@@ -454,6 +455,7 @@ const Drones = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </>
@@ -599,7 +601,8 @@ const Drones = () => {
             ) : fleetDrones.length === 0 ? (
               <div className="p-8 text-center font-mono text-sm text-muted-foreground">No drones registered yet.</div>
             ) : (
-              <table className="w-full">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
                 <thead>
                   <tr className="border-b border-border">
                     <th className="px-6 py-3 text-left stat-label">Name</th>
@@ -660,6 +663,7 @@ const Drones = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </>

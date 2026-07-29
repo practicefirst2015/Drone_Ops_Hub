@@ -123,7 +123,8 @@ function ListView({ projects, readinessMap }: { projects: any[]; readinessMap: R
 
   return (
     <div className="surface border border-border">
-      <table className="w-full">
+      <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
         <thead>
           <tr className="border-b border-border">
             <th className="px-6 py-3 text-left stat-label">Project</th>
@@ -168,6 +169,7 @@ function ListView({ projects, readinessMap }: { projects: any[]; readinessMap: R
           ))}
         </tbody>
       </table>
+              </div>
     </div>
   );
 }
