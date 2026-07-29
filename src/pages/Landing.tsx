@@ -250,12 +250,16 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="border-t border-border py-8 px-6">
-        <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-muted-foreground">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Plane className="w-3 h-3 text-primary" />
             <span className="font-mono tracking-widest uppercase">Airframe</span>
           </div>
-          <span>© {new Date().getFullYear()} All rights reserved.</span>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <span>© {new Date().getFullYear()}</span>
+          </div>
         </div>
       </footer>
     </div>

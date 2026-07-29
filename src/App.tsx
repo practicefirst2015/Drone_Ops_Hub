@@ -38,6 +38,7 @@ const FieldMode = lazy(() => import("./pages/FieldMode"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Guide = lazy(() => import("./pages/Guide"));
 const DocumentView = lazy(() => import("./pages/DocumentView"));
+const Legal = lazy(() => import("./pages/Legal"));
 
 // Portal pages (client-facing)
 const PortalDashboard = lazy(() => import("./pages/portal/PortalDashboard"));
@@ -195,6 +196,9 @@ const App = () => (
             <OrgProvider>
               <Routes>
                 <Route path="/landing" element={<Landing />} />
+                {/* Public: legal documents — must be reachable without an account */}
+                <Route path="/privacy" element={<Suspense fallback={<LazyFallback />}><Legal /></Suspense>} />
+                <Route path="/terms" element={<Suspense fallback={<LazyFallback />}><Legal /></Suspense>} />
                 {/* Public: emailed document links (signed + expiring, no login) */}
                 <Route
                   path="/doc"

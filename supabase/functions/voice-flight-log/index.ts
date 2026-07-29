@@ -76,6 +76,27 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!membership || membership.role === "viewer") return json({ error: "Forbidden" }, 403);
 
+    // Rate limit: this endpoint spends money per call (Whisper + gpt-4o-mini).
+    // 30 transcriptions/hour/user is far above real field usage but caps abuse.
+    const HOURLY_LIMIT = Number(Deno.env.get("VOICE_HOURLY_LIMIT") ?? 30);
+    const { data: used, error: rlError } = await supabase.rpc("consume_rate_limit", {
+      _user_id: userId,
+      _org_id: organization_id,
+      _function_name: "voice-flight-log",
+      _window_minutes: 60,
+    });
+    if (rlError) {
+      console.error("rate limit check failed:", rlError);
+      // Fail closed on a limiter outage rather than leaving spend uncapped.
+      return json({ error: "Voice input is temporarily unavailable. Please try again shortly." }, 503);
+    }
+    if (typeof used === "number" && used > HOURLY_LIMIT) {
+      return json(
+        { error: `Voice limit reached (${HOURLY_LIMIT} recordings per hour). Type the log instead, or try again later.` },
+        429,
+      );
+    }
+
     const audio = base64ToBytes(audio_base64);
     if (audio.byteLength === 0) return json({ error: "Empty recording" }, 400);
     if (audio.byteLength > MAX_AUDIO_BYTES) {

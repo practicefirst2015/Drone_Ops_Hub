@@ -36,8 +36,10 @@ const mainNav = [
 ];
 
 const adminNav = [
-  { title: "Admin", url: "/admin", icon: Settings },
-  { title: "Settings", url: "/settings", icon: SlidersHorizontal },
+  { title: "Admin", url: "/admin", icon: Settings, adminOnly: true },
+  // Settings must stay reachable for everyone: it holds the Account tab, where
+  // any user can export their data or delete their account.
+  { title: "Settings", url: "/settings", icon: SlidersHorizontal, adminOnly: false },
 ];
 
 interface AppSidebarProps {
@@ -124,7 +126,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: A
           <div className="px-3 mb-2">
             <p className={`section-title mb-2 px-3 ${hideLabels ? "md:hidden" : ""}`}>System</p>
           </div>
-          {isAdmin && adminNav.map((item) => (
+          {adminNav.filter((item) => isAdmin || !item.adminOnly).map((item) => (
             <NavLink
               key={item.url}
               to={item.url}
