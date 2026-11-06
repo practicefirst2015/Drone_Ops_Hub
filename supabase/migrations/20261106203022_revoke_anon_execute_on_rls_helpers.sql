@@ -1,3 +1,6 @@
+-- Applied to production (hgggkbnxlgthydfzjkpt) on 2026-11-06 as migration
+-- 20261106203022 "revoke_anon_execute_on_rls_helpers".
+
 -- Close the Supabase advisor finding "Public Can Execute SECURITY DEFINER
 -- Function" (lint 0028) for the eight RLS helper functions that are still
 -- callable without signing in via /rest/v1/rpc/*.
